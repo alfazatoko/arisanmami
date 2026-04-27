@@ -64,8 +64,17 @@ export default function LoginPage() {
       const password = cleaned.slice(-4) + '00';
       
       // Create account
-      await createUserWithEmailAndPassword(auth, email, password);
-      // Role will be chosen next
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Automatic role assignment
+      const { doc, setDoc } = await import('firebase/firestore');
+      await setDoc(doc((await import('@/lib/firebase')).db, 'users', userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        name: name,
+        phone: cleaned,
+        role: 'bandar',
+        createdAt: new Date().toISOString()
+      });
     } catch (error: any) {
       console.error(error);
       if (error.code === 'auth/email-already-in-use') {
@@ -78,54 +87,10 @@ export default function LoginPage() {
     }
   };
 
-  const handleChooseRole = async (role: 'bandar' | 'anggota') => {
-    try {
-      setLoading(true);
-      await setRole(role);
-      router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Gagal memilih peran', description: error.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (auth.currentUser && !profile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Pilih Peran Anda</CardTitle>
-            <CardDescription>Bagaimana Anda akan menggunakan MamaArisan?</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-32 flex-col gap-2 border-2 hover:border-primary hover:bg-primary/5"
-              onClick={() => handleChooseRole('bandar')}
-              disabled={loading}
-            >
-              <ShieldCheck className="h-8 w-8 text-primary" />
-              <div className="text-center">
-                <p className="font-bold">Bandar</p>
-                <p className="text-[10px] text-muted-foreground line-clamp-2">Buat & kelola grup arisan</p>
-              </div>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-32 flex-col gap-2 border-2 hover:border-violet-500 hover:bg-violet-50"
-              onClick={() => handleChooseRole('anggota')}
-              disabled={loading}
-            >
-              <LogIn className="h-8 w-8 text-violet-500" />
-              <div className="text-center">
-                <p className="font-bold">Anggota</p>
-                <p className="text-[10px] text-muted-foreground line-clamp-2">Lihat status & upload bukti</p>
-              </div>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
