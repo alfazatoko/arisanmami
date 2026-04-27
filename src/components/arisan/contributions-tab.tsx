@@ -197,11 +197,10 @@ export default function ContributionsTab({ group, onUpdate, isBandar }: Contribu
                       {isBandar && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <button className="flex items-center justify-center p-1 rounded hover:bg-muted">
-                              <Checkbox 
-                                checked={!!isPaid}
-                                className="h-6 w-6 rounded-full pointer-events-none"
-                              />
+                            <button className="flex items-center justify-center p-1 rounded hover:bg-muted focus:outline-none">
+                              <div className={`h-6 w-6 rounded-full border border-primary flex items-center justify-center transition-colors ${isPaid ? 'bg-primary text-primary-foreground' : 'bg-transparent'}`}>
+                                {isPaid && <Check className="h-4 w-4" />}
+                              </div>
                             </button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>

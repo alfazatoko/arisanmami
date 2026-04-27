@@ -86,7 +86,7 @@ export default function ParticipantsTab({ group, onUpdate, isBandar }: Participa
 
           updatedParticipant.userId = newUserId;
           newMemberId = newUserId;
-          toast({ title: 'Akun Peserta Dibuat', description: `PIN: ${newPhoneCleaned.slice(-4)}` });
+          toast({ title: 'Akun Peserta Dibuat', description: 'Nomor HP sudah bisa digunakan untuk login.' });
         } catch (error: any) {
           if (error.code === 'auth/email-already-in-use') {
             toast({ variant: 'destructive', title: 'Nomor HP sudah terdaftar', description: 'Gunakan nomor lain atau ini akun yang sudah ada.' });

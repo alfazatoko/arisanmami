@@ -99,9 +99,7 @@ export default function Home() {
           </div>
           <CardTitle className="text-xl mb-2">Belum ada grup arisan</CardTitle>
           <CardDescription className="max-w-xs mx-auto mb-6">
-            {profile.role === 'bandar' 
-              ? 'Mulai arisan pertama Anda dengan menambahkan peserta dan menentukan nilai iuran.'
-              : 'Anda belum terdaftar di grup arisan manapun. Hubungi Bandar untuk ditambahkan.'}
+            Mulai arisan pertama Anda dengan menambahkan peserta dan menentukan nilai iuran.
           </CardDescription>
           {profile.role === 'bandar' && (
             <Link href="/groups/new">

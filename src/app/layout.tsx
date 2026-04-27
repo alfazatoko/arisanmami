@@ -5,7 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { HeaderActions } from '@/components/HeaderActions';
 
 export const metadata: Metadata = {
-  title: 'MamaArisan - Buku Arisan Ibu-Ibu Modern',
+  title: 'Arisan Mami - Buku Arisan Ibu-Ibu Modern',
   description: 'Kelola grup arisan dengan mudah, adil, dan menyenangkan.',
 };
 
@@ -26,7 +26,7 @@ export default function RootLayout({
           <div className="max-w-4xl mx-auto px-4 py-8">
             <header className="mb-8 flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-primary font-headline">MamaArisan</h1>
+                <h1 className="text-3xl font-bold text-primary font-headline">Arisan Mami</h1>
                 <p className="text-muted-foreground hidden sm:block">Teman Setia Ibu Kelola Arisan</p>
               </div>
               <HeaderActions />

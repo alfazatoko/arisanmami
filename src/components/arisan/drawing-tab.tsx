@@ -186,7 +186,7 @@ export default function DrawingTab({ group, onUpdate, isBandar }: DrawingTabProp
             <Sparkles className="h-6 w-6 text-primary" /> Pengundian Putaran #{pendingRound.number}
           </CardTitle>
           <CardDescription>
-            Sistem MamaArisan menjamin keadilan bagi setiap peserta.
+            Sistem Arisan Mami menjamin keadilan bagi setiap peserta.
           </CardDescription>
         </CardHeader>
         
