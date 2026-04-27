@@ -25,6 +25,11 @@ export default function LoginPage() {
   const [bandarMode, setBandarMode] = useState<'login' | 'register'>('login');
   const [name, setName] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -121,6 +126,7 @@ export default function LoginPage() {
   }
 
   if (auth.currentUser && profile) return null;
+  if (!isMounted) return null;
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
