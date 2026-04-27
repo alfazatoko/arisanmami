@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account information and roles",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["bandar", "anggota"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "role", "createdAt"]
+    },
+    "ArisanGroup": {
+      "title": "Arisan Group",
+      "description": "A group for arisan activities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "contributionAmount": { "type": "number" },
+        "frequency": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "memberIds": { "type": "array", "items": { "type": "string" } },
+        "participants": { "type": "array" },
+        "rounds": { "type": "array" },
+        "contributions": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "contributionAmount", "frequency", "creatorId", "memberIds", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles and roles"
+    },
+    "/groups/{groupId}": {
+      "schema": "ArisanGroup",
+      "description": "Arisan groups managed by bandars"
+    }
+  }
+}

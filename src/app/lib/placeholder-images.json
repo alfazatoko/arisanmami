@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-illustration",
+      "description": "Happy community gathering",
+      "imageUrl": "https://picsum.photos/seed/mama-arisan/800/600",
+      "imageHint": "community happy"
+    }
+  ]
+}

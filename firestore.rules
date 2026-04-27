@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBandar(userId) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(userId)).data.role == 'bandar';
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      function isValidUserProfile(data) {
+        return data.keys().hasAll(['uid', 'name', 'role', 'createdAt']) &&
+               data.uid == userId &&
+               data.name is string && data.name.size() <= 100 &&
+               data.role in ['bandar', 'anggota'] &&
+               data.createdAt is string;
+      }
+
+      allow get: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidUserProfile(incoming()) && 
+                    incoming().role == existing().role; // Role is immutable
+    }
+
+    // --- Groups Collection ---
+    match /groups/{groupId} {
+      function isValidArisanGroup(data) {
+        return data.keys().hasAll(['id', 'name', 'contributionAmount', 'frequency', 'creatorId', 'memberIds', 'createdAt']) &&
+               data.id == groupId &&
+               data.name is string && data.name.size() <= 100 &&
+               data.contributionAmount is number &&
+               data.creatorId is string &&
+               data.memberIds is list &&
+               data.createdAt is string;
+      }
+
+      function isGroupMember() {
+        return isSignedIn() && (request.auth.uid == existing().creatorId || request.auth.uid in existing().memberIds);
+      }
+
+      allow get: if isGroupMember();
+      allow list: if isSignedIn() && (resource.data.creatorId == request.auth.uid || request.auth.uid in resource.data.memberIds);
+      
+      allow create: if isSignedIn() && isValidArisanGroup(incoming()) && incoming().creatorId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        // Bandar can update everything if they are the creator
+        (isOwner(existing().creatorId) && isValidArisanGroup(incoming())) ||
+        // Members can update the group ONLY to modify contributions (upload proof)
+        (request.auth.uid in existing().memberIds && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['contributions']) &&
+         isValidArisanGroup(incoming()))
+      );
+      
+      allow delete: if isOwner(existing().creatorId);
+    }
+  }
+}
