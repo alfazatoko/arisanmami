@@ -31,6 +31,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "name", "contributionAmount", "frequency", "creatorId", "memberIds", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app push notifications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "groupId", "title", "body", "isRead", "createdAt"]
     }
   },
   "firestore": {
@@ -41,6 +56,10 @@
     "/groups/{groupId}": {
       "schema": "ArisanGroup",
       "description": "Arisan groups managed by bandars"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Notifications for users"
     }
   }
 }

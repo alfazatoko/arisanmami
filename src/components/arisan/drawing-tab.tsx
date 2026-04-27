@@ -25,6 +25,83 @@ export default function DrawingTab({ group, onUpdate, isBandar }: DrawingTabProp
   const paidCount = group.contributions.filter(c => c.roundNumber === pendingRound?.number && c.isPaid).length;
   const isReady = paidCount === group.participants.length;
 
+  const playSynthesizedSound = (type: 'drumroll' | 'tada') => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioContext();
+      
+      if (type === 'drumroll') {
+        const duration = 2.5;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(100, ctx.currentTime);
+        // drum roll effect using frequency modulation
+        oscillator.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + duration);
+        
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(1, ctx.currentTime + duration - 0.1);
+        gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+        
+        // Tremolo effect for the drum roll
+        const lfo = ctx.createOscillator();
+        lfo.type = 'square';
+        lfo.frequency.value = 15; // 15 Hz
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 0.5;
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(gainNode.gain);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.start(ctx.currentTime);
+        lfo.start(ctx.currentTime);
+        oscillator.stop(ctx.currentTime + duration);
+        lfo.stop(ctx.currentTime + duration);
+        
+      } else if (type === 'tada') {
+        const duration = 1.5;
+        const oscillator1 = ctx.createOscillator();
+        const oscillator2 = ctx.createOscillator();
+        const oscillator3 = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        // C Major chord notes
+        oscillator1.type = 'sine';
+        oscillator1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        
+        oscillator2.type = 'sine';
+        oscillator2.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
+        
+        oscillator3.type = 'sine';
+        oscillator3.frequency.setValueAtTime(783.99, ctx.currentTime); // G5
+        
+        gainNode.gain.setValueAtTime(0, ctx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        oscillator3.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator1.start(ctx.currentTime);
+        oscillator2.start(ctx.currentTime);
+        oscillator3.start(ctx.currentTime);
+        
+        oscillator1.stop(ctx.currentTime + duration);
+        oscillator2.stop(ctx.currentTime + duration);
+        oscillator3.stop(ctx.currentTime + duration);
+      }
+    } catch (e) {
+      console.log('Web Audio API not supported or blocked');
+    }
+  };
+
   const startDraw = async () => {
     if (!pendingRound) return;
     
@@ -32,8 +109,12 @@ export default function DrawingTab({ group, onUpdate, isBandar }: DrawingTabProp
     setWinner(null);
     setAiMessage(null);
 
+    playSynthesizedSound('drumroll');
+
     // Dramatic pause for animation effect
     await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    playSynthesizedSound('tada');
 
     const randomIndex = Math.floor(Math.random() * eligibleParticipants.length);
     const selectedWinner = eligibleParticipants[randomIndex];

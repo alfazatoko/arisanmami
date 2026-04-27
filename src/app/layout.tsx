@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/AuthContext';
+import { HeaderActions } from '@/components/HeaderActions';
 
 export const metadata: Metadata = {
   title: 'MamaArisan - Buku Arisan Ibu-Ibu Modern',
@@ -26,11 +27,9 @@ export default function RootLayout({
             <header className="mb-8 flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-primary font-headline">MamaArisan</h1>
-                <p className="text-muted-foreground">Teman Setia Ibu Kelola Arisan</p>
+                <p className="text-muted-foreground hidden sm:block">Teman Setia Ibu Kelola Arisan</p>
               </div>
-              <div className="bg-secondary/20 p-2 rounded-full">
-                <span className="text-secondary font-bold text-sm px-3 py-1 bg-white rounded-full shadow-sm">v1.0</span>
-              </div>
+              <HeaderActions />
             </header>
             <main>{children}</main>
           </div>

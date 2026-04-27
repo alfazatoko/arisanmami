@@ -79,5 +79,25 @@ service cloud.firestore {
       
       allow delete: if isOwner(existing().creatorId);
     }
+    // --- Notifications Collection ---
+    match /notifications/{notificationId} {
+      function isValidNotification(data) {
+        return data.keys().hasAll(['id', 'userId', 'groupId', 'title', 'body', 'isRead', 'createdAt']) &&
+               data.id == notificationId &&
+               data.userId is string &&
+               data.groupId is string &&
+               data.title is string && data.title.size() <= 100 &&
+               data.body is string && data.body.size() <= 500 &&
+               data.isRead is bool &&
+               data.createdAt is string;
+      }
+      
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidNotification(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['isRead']) &&
+                    isValidNotification(incoming());
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
   }
 }

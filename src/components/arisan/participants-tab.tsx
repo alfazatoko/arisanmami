@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { UserMinus, UserPlus, Pencil, Check } from 'lucide-react';
+import { UserMinus, UserPlus, Pencil, Check, MessageCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,16 @@ import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { secondaryAuth, secondaryDb } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ParticipantsTabProps {
   group: ArisanGroup;
@@ -23,6 +33,7 @@ export default function ParticipantsTab({ group, onUpdate, isBandar }: Participa
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [participantToDelete, setParticipantToDelete] = useState<string | null>(null);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -106,11 +117,12 @@ export default function ParticipantsTab({ group, onUpdate, isBandar }: Participa
     }
   };
 
-  const removeParticipant = (id: string) => {
-    if (confirm('Hapus peserta ini?')) {
-      const participants = group.participants.filter(p => p.id !== id);
+  const confirmRemoveParticipant = () => {
+    if (participantToDelete) {
+      const participants = group.participants.filter(p => p.id !== participantToDelete);
       // We should arguably remove them from memberIds but it's okay to leave it for history.
       onUpdate({ ...group, participants });
+      setParticipantToDelete(null);
     }
   };
 
@@ -121,6 +133,20 @@ export default function ParticipantsTab({ group, onUpdate, isBandar }: Participa
       hasWon: false,
     };
     onUpdate({ ...group, participants: [...group.participants, newParticipant] });
+  };
+
+  const shareViaWA = (p: Participant) => {
+    const message = `Halo ${p.name}, pengingat arisan "${group.name}". Jangan lupa menyelesaikan bagian arisan Anda ya.`;
+    const encodedMessage = encodeURIComponent(message);
+    let url = `https://wa.me/?text=${encodedMessage}`;
+    if (p.phone) {
+      let cleanP = cleanPhone(p.phone);
+      if (cleanP.startsWith('0')) {
+        cleanP = '62' + cleanP.slice(1);
+      }
+      url = `https://wa.me/${cleanP}?text=${encodedMessage}`;
+    }
+    window.open(url, '_blank');
   };
 
   return (
@@ -196,10 +222,13 @@ export default function ParticipantsTab({ group, onUpdate, isBandar }: Participa
                       </div>
                     ) : (
                       <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => shareViaWA(p)} title="Kirim Pengingat WA">
+                          <MessageCircle className="h-4 w-4 text-green-500" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => startEdit(p)} disabled={loading}>
                           <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => removeParticipant(p.id)} disabled={p.hasWon || loading}>
+                        <Button variant="ghost" size="icon" onClick={() => setParticipantToDelete(p.id)} disabled={p.hasWon || loading}>
                           <UserMinus className="h-4 w-4 text-destructive opacity-50 hover:opacity-100" />
                         </Button>
                       </div>
@@ -212,6 +241,21 @@ export default function ParticipantsTab({ group, onUpdate, isBandar }: Participa
         </Table>
         </div>
       </CardContent>
+
+      <AlertDialog open={!!participantToDelete} onOpenChange={(open) => !open && setParticipantToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Peserta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus peserta ini?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemoveParticipant} className="bg-destructive hover:bg-destructive/90 text-white">Hapus</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

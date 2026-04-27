@@ -12,7 +12,7 @@ import ParticipantsTab from '@/components/arisan/participants-tab';
 import ContributionsTab from '@/components/arisan/contributions-tab';
 import DrawingTab from '@/components/arisan/drawing-tab';
 import HistoryTab from '@/components/arisan/history-tab';
-import RemindersTab from '@/components/arisan/reminders-tab';
+// removed RemindersTab import
 import { useAuth } from '@/context/AuthContext';
 
 export default function GroupDetails({ params }: { params: Promise<{ id: string }> }) {
@@ -88,7 +88,7 @@ export default function GroupDetails({ params }: { params: Promise<{ id: string 
       </header>
 
       <Tabs defaultValue="participants" className="w-full">
-        <TabsList className="grid grid-cols-5 w-full bg-muted/50 p-1 rounded-xl h-auto">
+        <TabsList className="grid grid-cols-4 w-full bg-muted/50 p-1 rounded-xl h-auto">
           <TabsTrigger value="participants" className="rounded-lg py-2 flex-col gap-1 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Users className="h-4 w-4" />
             <span className="text-[10px] sm:text-xs">Peserta</span>
@@ -100,10 +100,6 @@ export default function GroupDetails({ params }: { params: Promise<{ id: string 
           <TabsTrigger value="drawing" className="rounded-lg py-2 flex-col gap-1 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <Trophy className="h-4 w-4" />
             <span className="text-[10px] sm:text-xs">Undian</span>
-          </TabsTrigger>
-          <TabsTrigger value="reminders" className="rounded-lg py-2 flex-col gap-1 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <MessageCircle className="h-4 w-4" />
-            <span className="text-[10px] sm:text-xs">Pengingat</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="rounded-lg py-2 flex-col gap-1 data-[state=active]:bg-white data-[state=active]:shadow-sm">
             <History className="h-4 w-4" />
@@ -120,9 +116,6 @@ export default function GroupDetails({ params }: { params: Promise<{ id: string 
           </TabsContent>
           <TabsContent value="drawing">
             <DrawingTab group={group} onUpdate={updateGroup} isBandar={isBandar} />
-          </TabsContent>
-          <TabsContent value="reminders">
-            <RemindersTab group={group} isBandar={isBandar} />
           </TabsContent>
           <TabsContent value="history">
             <HistoryTab group={group} />

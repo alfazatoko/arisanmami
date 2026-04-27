@@ -81,8 +81,8 @@ export default function Home() {
         <div className="flex gap-2">
           {profile.role === 'bandar' && (
             <Link href="/groups/new">
-              <Button className="rounded-full shadow-lg bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" /> Buat Grup Baru
+              <Button className="rounded-full shadow-xl bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 text-white font-bold border-none transition-transform hover:scale-105">
+                <Plus className="mr-2 h-5 w-5" /> Buat Grup Baru
               </Button>
             </Link>
           )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -95,8 +95,13 @@ export default function LoginPage() {
     );
   }
 
+  useEffect(() => {
+    if (auth.currentUser && profile) {
+      router.push('/');
+    }
+  }, [auth.currentUser, profile, router]);
+
   if (auth.currentUser && profile) {
-    router.push('/');
     return null;
   }
 

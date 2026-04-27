@@ -11,6 +11,17 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContributionsTabProps {
   group: ArisanGroup;
@@ -184,11 +195,30 @@ export default function ContributionsTab({ group, onUpdate, isBandar }: Contribu
                       )}
 
                       {isBandar && (
-                        <Checkbox 
-                          checked={!!isPaid}
-                          onCheckedChange={() => togglePayment(p.id)}
-                          className="h-6 w-6 rounded-full"
-                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="flex items-center justify-center p-1 rounded hover:bg-muted">
+                              <Checkbox 
+                                checked={!!isPaid}
+                                className="h-6 w-6 rounded-full pointer-events-none"
+                              />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Konfirmasi Ubah Status</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Anda yakin ingin mengubah status pembayaran arisan untuk <strong>{p.name}</strong>?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Batal</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => togglePayment(p.id)}>
+                                Ya, Ubah
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                   </TableCell>
