@@ -1,0 +1,10 @@
+{
+  "name": "Arisan Bunda",
+  "short_name": "ArisanBunda",
+  "description": "Aplikasi pengelolaan arisan modern, rapi & transparan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#a855f7",
+  "orientation": "portrait"
+}
