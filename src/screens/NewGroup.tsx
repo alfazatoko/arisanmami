@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db, generateId } from '../firebase/config';
+import { db, generateId, formatPhone } from '../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
 import { Screen } from '../App';
 
@@ -40,7 +40,7 @@ export default function NewGroup({ user, profile, setScreen }: Props) {
 
       // Pastikan memberIds selalu include user.uid
       const memberIds = [user.uid];
-      if (profile?.phone) memberIds.push(profile.phone);
+      if (profile?.phone) memberIds.push(formatPhone(profile.phone));
 
       const newGroup = {
         id,

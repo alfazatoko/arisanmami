@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db, generateId } from '../firebase/config';
+import { db, generateId, formatPhone } from '../firebase/config';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Screen } from '../App';
 
@@ -13,6 +13,8 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
   const [activeTab, setActiveTab] = useState<'anggota' | 'riwayat'>('anggota');
   const [shuffling, setShuffling] = useState(false);
   const [winner, setWinner] = useState<any>(null);
+  const [editingParticipant, setEditingParticipant] = useState<{ idx: number, name: string, phone: string } | null>(null);
+  const [addingParticipant, setAddingParticipant] = useState<{ name: string, phone: string } | null>(null);
   const isBandar = profile?.role === 'bandar';
 
   const formatRp = (angka: number) => {
@@ -20,12 +22,17 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
   };
 
   const updateParticipants = async (newParticipants: any[]) => {
-    await updateDoc(doc(db, 'groups', g.id), { participants: newParticipants });
+    const phones = newParticipants.map(p => formatPhone(p.phone)).filter(p => p);
+    const newMemberIds = [...new Set([g.creatorId, ...phones])];
+    await updateDoc(doc(db, 'groups', g.id), { 
+      participants: newParticipants,
+      memberIds: newMemberIds
+    });
   };
 
   const handlePayToggle = async (idx: number) => {
     const p = g.participants[idx];
-    const actionText = p.isPaid ? "membatalkan status LUNAS" : "menandai sebagai LUNAS";
+    const actionText = p.isPaid ? "membatalkan status SUDAH LUNAS" : "menandai sebagai SUDAH LUNAS";
 
     if (!confirm(`Apakah Anda yakin ingin ${actionText} untuk anggota ${p.name}?`)) return;
 
@@ -34,17 +41,9 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
     await updateParticipants(newParticipants);
   };
 
-  const handleEditParticipant = async (idx: number) => {
+  const handleEditParticipant = (idx: number) => {
     const p = g.participants[idx];
-    const newName = prompt('Edit Nama:', p.name);
-    if (newName === null) return;
-    const newPhone = prompt('Edit No HP:', p.phone);
-    if (newPhone === null) return;
-
-    const newParticipants = [...g.participants];
-    newParticipants[idx].name = newName.trim() || p.name;
-    newParticipants[idx].phone = newPhone.trim() || p.phone;
-    await updateParticipants(newParticipants);
+    setEditingParticipant({ idx, name: p.name, phone: p.phone });
   };
 
   const handleDeleteParticipant = async (idx: number) => {
@@ -53,28 +52,8 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
     await updateParticipants(newParticipants);
   };
 
-  const handleAddParticipant = async () => {
-    const name = prompt('Nama Lengkap:');
-    const phone = prompt('No. HP / WA:')?.replace(/\D/g, '');
-    if (!name || !phone) return;
-
-    if (g.participants.some((p: any) => p.phone === phone)) {
-      return alert('Nomor HP ini sudah ada di grup!');
-    }
-
-    const newParticipants = [...g.participants, {
-      id: generateId(),
-      name,
-      phone,
-      hasWon: false,
-      wonRound: null,
-      isPaid: false
-    }];
-
-    await updateDoc(doc(db, 'groups', g.id), {
-      participants: newParticipants,
-      memberIds: [...g.memberIds, phone]
-    });
+  const handleAddParticipant = () => {
+    setAddingParticipant({ name: '', phone: '' });
   };
 
   const handleStartKocok = async () => {
@@ -93,7 +72,7 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
           });
         }
       } else {
-        alert('TIDAK BISA MENGOCOK:\nBelum ada anggota yang LUNAS di antara mereka yang belum dapat giliran.');
+        alert('TIDAK BISA MENGOCOK:\nBelum ada anggota yang SUDAH LUNAS di antara mereka yang belum dapat giliran.');
       }
       return;
     }
@@ -106,22 +85,18 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
     const luckyWinner = eligible[Math.floor(Math.random() * eligible.length)];
     const roundNum = g.participants.filter((p: any) => p.hasWon).length + 1;
 
-    const newParticipants = g.participants.map((p: any) => {
-      if (p.id === luckyWinner.id) {
-        return { ...p, hasWon: true, wonRound: roundNum };
-      }
-      return p;
-    });
+    const newParticipants = g.participants.map((p: any) => ({
+      ...p,
+      isPaid: false,
+      ...(p.id === luckyWinner.id ? { hasWon: true, wonRound: roundNum } : {})
+    }));
 
     await updateParticipants(newParticipants);
     setWinner({ ...luckyWinner, wonRound: roundNum, pot: g.contributionAmount * g.participants.length });
     setShuffling(false);
   };
 
-  const handleCloseWinnerModal = async () => {
-    // Auto-reset semua anggota menjadi BELUM BAYAR setelah undian
-    const resetParticipants = g.participants.map((p: any) => ({ ...p, isPaid: false }));
-    await updateParticipants(resetParticipants);
+  const handleCloseWinnerModal = () => {
     setWinner(null);
   };
 
@@ -134,8 +109,8 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
 
   const handleWA = (p: any) => {
     if (!p.phone) return alert('Nomor HP tidak tersedia');
-    let phone = p.phone.replace(/\D/g, '');
-    if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+    const phone = formatPhone(p.phone);
+    if (!phone) return alert('Nomor HP tidak valid');
 
     const msg = p.isPaid
       ? `Halo Bunda ${p.name}, uang arisan grup *${g.name}* bulan ini sudah lunas masuk rekap ya. Terima kasih!`
@@ -253,14 +228,14 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
                     {isBandar ? (
                       <div className="toggle-wrapper" onClick={() => handlePayToggle(idx)}>
                         <span className={`toggle-status ${p.isPaid ? 'status-lunas' : 'status-belum'}`}>
-                          {p.isPaid ? 'LUNAS' : 'BELUM'}
+                          {p.isPaid ? 'SUDAH LUNAS' : 'BELUM BAYAR'}
                         </span>
                         <div className={`native-switch ${p.isPaid ? 'active' : ''}`}></div>
                       </div>
                     ) : (
                       <div className="toggle-wrapper">
                         <span className={`toggle-status ${p.isPaid ? 'status-lunas' : 'status-belum'}`}>
-                          {p.isPaid ? 'LUNAS' : 'BELUM'}
+                          {p.isPaid ? 'SUDAH LUNAS' : 'BELUM BAYAR'}
                         </span>
                       </div>
                     )}
@@ -390,13 +365,12 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
           {[...Array(12)].map((_, i) => (
             <i
               key={i}
-              className={`fas fa-${['star', 'gift', 'trophy', 'heart', 'gem', 'crown'][i % 6]}`}
+              className={`floating-icon fas fa-${['star', 'gift', 'trophy', 'heart', 'gem', 'crown'][i % 6]}`}
               style={{
                 left: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 2}s`,
                 color: ['#f59e0b', '#ec4899', '#a855f7', '#10b981', '#3b82f6', '#fbbf24'][i % 6]
               }}
-              className={`floating-icon fas fa-${['star', 'gift', 'trophy', 'heart', 'gem', 'crown'][i % 6]}`}
             />
           ))}
           {/* Confetti */}
@@ -519,6 +493,131 @@ export default function GroupDetails({ profile, activeGroup: g, setScreen }: Pro
           >
             <i className="fas fa-trash"></i> Hapus Grup
           </button>
+        </div>
+      )}
+
+      {/* Edit Participant Modal */}
+      {editingParticipant && (
+        <div className="modal-overlay show" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: '90%', maxWidth: '400px', margin: '0', animation: 'fade-slide-down 0.3s ease-out' }}>
+            <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)' }}>Edit Anggota</h3>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>Nama</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  style={{ width: '100%' }}
+                  value={editingParticipant.name}
+                  onChange={(e) => setEditingParticipant({...editingParticipant, name: e.target.value})}
+                  placeholder="Nama Anggota"
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>No. HP</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  style={{ width: '100%' }}
+                  value={editingParticipant.phone}
+                  onChange={(e) => setEditingParticipant({...editingParticipant, phone: e.target.value.replace(/\D/g, '')})}
+                  placeholder="0812xxx"
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ flex: 1 }}
+                onClick={() => setEditingParticipant(null)}
+              >
+                Batal
+              </button>
+              <button 
+                className="btn btn-primary" 
+                style={{ flex: 1 }}
+                onClick={async () => {
+                  const newParticipants = [...g.participants];
+                  const { idx, name, phone } = editingParticipant;
+                  newParticipants[idx].name = name.trim() || newParticipants[idx].name;
+                  newParticipants[idx].phone = phone.trim() || newParticipants[idx].phone;
+                  await updateParticipants(newParticipants);
+                  setEditingParticipant(null);
+                }}
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Participant Modal */}
+      {addingParticipant && (
+        <div className="modal-overlay show" style={{ zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: '90%', maxWidth: '400px', margin: '0', animation: 'fade-slide-down 0.3s ease-out' }}>
+            <h3 style={{ marginBottom: '15px', color: 'var(--text-primary)' }}>Tambah Anggota Baru</h3>
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>Nama</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  style={{ width: '100%' }}
+                  value={addingParticipant.name}
+                  onChange={(e) => setAddingParticipant({...addingParticipant, name: e.target.value})}
+                  placeholder="Nama Lengkap"
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>No. HP</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  style={{ width: '100%' }}
+                  value={addingParticipant.phone}
+                  onChange={(e) => setAddingParticipant({...addingParticipant, phone: e.target.value.replace(/\D/g, '')})}
+                  placeholder="0812xxx"
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ flex: 1 }}
+                onClick={() => setAddingParticipant(null)}
+              >
+                Batal
+              </button>
+              <button 
+                className="btn btn-primary" 
+                style={{ flex: 1 }}
+                disabled={!addingParticipant.name || !addingParticipant.phone}
+                onClick={async () => {
+                  const { name, phone } = addingParticipant;
+                  if (!name || !phone) return;
+
+                  if (g.participants.some((p: any) => p.phone === phone)) {
+                    return alert('Nomor HP ini sudah ada di grup!');
+                  }
+
+                  const newParticipants = [...g.participants, {
+                    id: generateId(),
+                    name: name.trim(),
+                    phone: phone.trim(),
+                    hasWon: false,
+                    wonRound: null,
+                    isPaid: false
+                  }];
+
+                  await updateParticipants(newParticipants);
+                  setAddingParticipant(null);
+                }}
+              >
+                Tambah
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { auth, db } from '../firebase/config';
+import { auth, db, formatPhone } from '../firebase/config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { Screen } from '../App';
@@ -48,7 +48,7 @@ export default function Login({ setScreen }: Props) {
   };
 
   const handleLogin = async () => {
-    const cleanPhone = phone.replace(/\D/g, '');
+    const cleanPhone = formatPhone(phone);
     const loginPassword = activeTab === 'bandar' ? password : cleanPhone;
 
     if (!cleanPhone || (activeTab === 'bandar' && !loginPassword)) {

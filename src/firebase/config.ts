@@ -23,3 +23,10 @@ export const generateId = () => {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);
     }
 };
+export const formatPhone = (phone: string) => {
+    if (!phone) return "";
+    let clean = phone.replace(/\D/g, '');
+    if (clean.startsWith('0')) return '62' + clean.substring(1);
+    if (clean.startsWith('8')) return '62' + clean;
+    return clean;
+};

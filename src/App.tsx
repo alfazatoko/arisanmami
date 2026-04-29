@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { auth, db } from './firebase/config';
+import { auth, db, formatPhone } from './firebase/config';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 
@@ -31,11 +31,13 @@ function App() {
         const profileData = profileDoc.exists() ? profileDoc.data() : { name: user.displayName || 'Bunda', role: 'bandar' };
         setProfile(profileData);
 
-        // Query grup yang dibuat oleh user ini
-        // TODO: Tambah kembali orderBy('createdAt', 'desc') setelah index selesai
+        // Query grup di mana user adalah pencipta atau anggota
+        const searchTerms = [user.uid];
+        if (profileData.phone) searchTerms.push(formatPhone(profileData.phone));
+
         const q = query(
           collection(db, 'groups'),
-          where('memberIds', 'array-contains', user.uid)
+          where('memberIds', 'array-contains-any', searchTerms)
         );
 
         const unsubGroups = onSnapshot(q, (snapshot) => {

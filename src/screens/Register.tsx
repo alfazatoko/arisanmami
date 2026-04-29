@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { auth, db } from '../firebase/config';
+import { auth, db, formatPhone } from '../firebase/config';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { Screen } from '../App';
@@ -15,7 +15,7 @@ export default function Register({ setScreen }: Props) {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    const cleanPhone = phone.replace(/\D/g, '');
+    const cleanPhone = formatPhone(phone);
     if (!name || !cleanPhone || !password) return alert('Lengkapi semua data');
     if (password.length < 6) return alert('Password minimal 6 karakter');
 
